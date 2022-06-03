@@ -1,6 +1,5 @@
 from datetime import date, timedelta
 from typing import Tuple
-import pytest
 
 from model import OrderLine, Batch, OrderReference, Quantity, Reference, Sku, allocate
 
@@ -60,5 +59,14 @@ def test_prefers_current_stock_batches_to_shipments():
 # def test_prefers_warehouse_batches_to_shipments():
 #     pytest.fail('todo')
 
-# def test_prefers_earlier_batches():
-#     pytest.fail('todo')
+def test_prefers_earlier_batches():
+    earliest = Batch(Reference('batch-01'), Sku('Black-Chair'), 20, eta=today)
+    medium = Batch(Reference('batch-02'), Sku('Black-Chair'), 20, eta=tomorrow)
+    latest = Batch(Reference('batch-03'), Sku('Black-Chair'), 20, eta=later)
+    line = OrderLine(OrderReference('order-001'), Sku('Black-Chair'), 2)
+
+    allocate(line, [medium, earliest, latest])
+
+    assert earliest.available_quantity == 18
+    assert latest.available_quantity == 20
+    assert medium.available_quantity == 20

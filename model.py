@@ -63,6 +63,13 @@ class Batch:
 
     def __hash__(self) -> int:
         return hash(self.reference)
+    
+    def __gt__(self, other: 'Batch') -> bool:
+        if self.eta is None:
+            return False
+        if other.eta is None:
+            return True
+        return self.eta > other.eta
 
 
 def allocate(orderline: OrderLine, batches: List[Batch]):
