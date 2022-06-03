@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from typing import Tuple
 import pytest
 
-from model import OrderLine, Batch, OrderReference, Quantity, Reference, Sku
+from model import OrderLine, Batch, OrderReference, Quantity, Reference, Sku, allocate
 
 today = date.today()
 tomorrow = today + timedelta(days=1)
@@ -45,6 +45,17 @@ def test_allocation_is_idempotent():
     batch.allocate(line)
     batch.allocate(line)
     assert batch.available_quantity == 18
+
+
+def test_prefers_current_stock_batches_to_shipments():
+    in_stock_batch = Batch(Reference('batch-01'), Sku('Black-Chair'), 20, eta=None)
+    shipment_batch = Batch(Reference('batch-02'), Sku('Black-Chair'), 20, eta=tomorrow)
+    line = OrderLine(OrderReference('order-001'), Sku('Black-Chair'), 2)
+
+    allocate(line, [in_stock_batch, shipment_batch])
+
+    assert in_stock_batch.available_quantity == 18
+    assert shipment_batch.available_quantity == 20
 
 # def test_prefers_warehouse_batches_to_shipments():
 #     pytest.fail('todo')

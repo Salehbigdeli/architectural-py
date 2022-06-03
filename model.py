@@ -64,3 +64,10 @@ class Batch:
     def __hash__(self) -> int:
         return hash(self.reference)
 
+
+def allocate(orderline: OrderLine, batches: List[Batch]):
+    batch = next(
+        b for b in sorted(batches) if b.can_allocate(orderline)
+    )
+    batch.allocate(orderline)
+    return batch.reference
