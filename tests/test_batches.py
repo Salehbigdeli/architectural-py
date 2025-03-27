@@ -3,7 +3,7 @@ from datetime import date, timedelta
 import pytest
 from pydantic import PositiveInt
 
-from arch.model import Batch, OrderLine, OutOfStock, allocate
+from allocations.model import Batch, OrderLine, OutOfStock, allocate
 
 today = date.today()
 tommorow = today + timedelta(days=1)

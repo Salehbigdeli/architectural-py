@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Date, ForeignKey, Integer, MetaData, String, Table
 from sqlalchemy.orm import registry, relationship
 
-from arch import model
+from allocations import model
 
 metadata = MetaData()
 mapper_reg = registry()

@@ -5,40 +5,20 @@ from collections.abc import Generator
 
 import pytest
 import requests
+from sqlalchemy import text
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, clear_mappers, sessionmaker
+from sqlalchemy.exc import OperationalError
+from requests.exceptions import ConnectionError
 
-from arch import config
-from arch.orm import metadata, start_mappers
+from allocations import config
+from allocations.orm import metadata, start_mappers
 
 
 @pytest.fixture
 def restart_api() -> Generator[None, None, None]:
-    """Fixture to start and stop the API server for testing."""
-    # Kill any existing uvicorn processes
-    subprocess.run(["pkill", "-f", "uvicorn"], check=False)
-
-    # Start the API server
-    process = subprocess.Popen(
-        ["uvicorn", "arch.app:app", "--host", "localhost", "--port", "5005"],
-        preexec_fn=os.setsid,
-    )
-
-    # Wait for the server to start
-    time.sleep(1)
-
-    # Test if the server is up
-    try:
-        requests.get(f"{config.get_api_url()}/")
-    except requests.ConnectionError as e:
-        raise Exception("API server failed to start") from e
-
-    yield
-
-    # Kill the server after the test
-    process.kill()
-    time.sleep(1)
+    pass
 
 
 @pytest.fixture
@@ -53,3 +33,77 @@ def session(in_memory_db: Engine) -> Generator[Session, None, None]:
     start_mappers()
     yield sessionmaker(bind=in_memory_db)()
     clear_mappers()
+
+
+def wait_for_postgres_to_come_up(engine):
+    deadline = time.time() + 10
+    while time.time() < deadline:
+        try:
+            return engine.connect()
+        except OperationalError:
+            time.sleep(0.5)
+    pytest.fail("Postgres never came up")
+
+
+def wait_for_webapp_to_come_up():
+    deadline = time.time() + 10
+    url = config.get_api_url()
+    while time.time() < deadline:
+        try:
+            return requests.get(url)
+        except ConnectionError:
+            time.sleep(0.5)
+    pytest.fail("API never came up")
+
+
+@pytest.fixture(scope="session")
+def postgres_db() -> Generator[Engine, None, None]:
+    engine = create_engine(config.get_postgres_uri())
+    wait_for_postgres_to_come_up(engine)
+    metadata.create_all(engine)
+    return engine
+
+
+@pytest.fixture
+def postgres_session(postgres_db: Engine) -> Generator[Session, None, None]:
+    start_mappers()
+    yield sessionmaker(bind=postgres_db)()
+    clear_mappers()
+
+
+@pytest.fixture
+def add_stock(postgres_session: Session):
+    batches_added = set()
+    skus_added = set()
+
+    def _add_stock(lines):
+        for ref, sku, qty, eta in lines:
+            postgres_session.execute(
+                text("INSERT INTO batches (reference, sku, _purchased_quantity, eta)"
+                " VALUES (:ref, :sku, :qty, :eta)"),
+                dict(ref=ref, sku=sku, qty=qty, eta=eta),
+            )
+            
+            [[batch_id]] = postgres_session.execute(
+                text("SELECT id FROM batches WHERE reference=:ref AND sku=:sku"),
+                dict(ref=ref, sku=sku),
+            )
+            batches_added.add(batch_id)
+            skus_added.add(sku)
+        postgres_session.commit()
+
+    yield _add_stock
+
+    for batch_id in batches_added:
+        postgres_session.execute(
+            text("DELETE FROM allocations WHERE batch_id=:batch_id"),
+            dict(batch_id=batch_id),
+        )
+        postgres_session.execute(
+            text("DELETE FROM batches WHERE id=:batch_id"), dict(batch_id=batch_id),
+        )
+    for sku in skus_added:
+        postgres_session.execute(
+            text("DELETE FROM order_lines WHERE sku=:sku"), dict(sku=sku),
+        )
+        postgres_session.commit()
