@@ -1,12 +1,16 @@
-import requests
+from typing import Callable, List, Optional, Tuple
+
 import pytest
+import requests
 
 from allocations import config
 from tests.utils import random_batchref, random_orderid, random_sku
 
 
 @pytest.mark.usefixtures("restart_api")
-def test_api_returns_allocation(add_stock):
+def test_api_returns_allocation(
+    add_stock: Callable[[List[Tuple[str, str, int, Optional[str]]]], None],
+) -> None:
     sku, othersku = random_sku(), random_sku()
     earlybatch = random_batchref()
     laterbatch = random_batchref()
