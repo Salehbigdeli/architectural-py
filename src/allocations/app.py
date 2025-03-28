@@ -27,14 +27,14 @@ def is_valid_sku(sku: str, batches: list[model.Batch]) -> bool:
     return sku in {b.sku for b in batches}
 
 
-@app.post("/allocate", status_code=201, response_model=dict[str, str])  # this should not be None
+@app.post(
+    "/allocate", status_code=201, response_model=dict[str, str]
+)  # this should not be None
 async def allocate_endpoint(
     request: Request, allocation: AllocationRequest
 ) -> dict[str, str] | JSONResponse:
     session = get_session()
-    repo = repository.SqlAlchemyRepository(
-        session
-    )
+    repo = repository.SqlAlchemyRepository(session)
 
     line = model.OrderLine(allocation.orderid, allocation.sku, allocation.qty)
     try:
