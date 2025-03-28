@@ -12,7 +12,7 @@ from allocations.adapters import orm, repository
 from allocations.domain import model
 from allocations.service_layer import services
 
-# Configure logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

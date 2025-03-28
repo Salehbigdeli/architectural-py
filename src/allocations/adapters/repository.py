@@ -8,21 +8,21 @@ from allocations.domain import model
 
 class AbstractSession(Protocol):
     def commit(self) -> None:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class AbstractRepository(abc.ABC):
     @abc.abstractmethod
     def add(self, batch: model.Batch) -> None:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
     def get(self, reference: str) -> model.Batch:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
     def list(self) -> list[model.Batch]:
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class SqlAlchemyRepository(AbstractRepository):

@@ -14,7 +14,7 @@ dependencies = [
     "uvicorn",
 ]
 [tool.uv]
-dev-dependencies = ["ruff", "pytest", "mypy"]
+dev-dependencies = ["ruff", "pytest", "mypy", "coverage", "pytest-cov"]
 
 [tool.mypy]
 strict = true

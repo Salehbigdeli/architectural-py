@@ -73,3 +73,14 @@ def test_repository_can_retrieve_a_batch_with_allocations(session: Session) -> N
     assert retrieved.sku == expected.sku
     assert retrieved._purchased_quantity == expected._purchased_quantity
     assert retrieved._allocations == {model.OrderLine("order1", "chair", 12)}
+
+
+def test_repository_list_returns_all_batches(session: Session) -> None:
+    batch1 = model.Batch("batch1", sku="batch_sku", qty=10)
+    batch2 = model.Batch("batch2", sku="batch_sku", qty=10)
+
+    repo = SqlAlchemyRepository(session)
+    repo.add(batch1)
+    repo.add(batch2)
+
+    assert repo.list() == [batch1, batch2]
