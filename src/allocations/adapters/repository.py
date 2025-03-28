@@ -3,7 +3,7 @@ from typing import Protocol
 
 from sqlalchemy.orm import Session
 
-from allocations import model
+from allocations.domain import model
 
 
 class AbstractSession(Protocol):

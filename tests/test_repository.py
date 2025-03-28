@@ -1,8 +1,8 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from allocations import model
-from allocations.repository import SqlAlchemyRepository
+from allocations.adapters.repository import SqlAlchemyRepository
+from allocations.domain import model
 
 
 def test_repository_can_save_a_batch(session: Session) -> None:

@@ -8,4 +8,4 @@ RUN pip install -r /tmp/requirements.txt
 RUN mkdir -p /code
 COPY src /code
 WORKDIR /code
-CMD ["uvicorn", "allocations.app:app", "--reload", "--host", "0.0.0.0", "--port", "5002"]
+CMD ["uvicorn", "allocations.endpoints.app:app", "--reload", "--host", "0.0.0.0", "--port", "5002"]

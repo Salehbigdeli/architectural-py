@@ -1,4 +1,5 @@
-from allocations import model, repository
+from allocations.adapters import repository
+from allocations.domain import model
 
 
 class InvalidSku(Exception):

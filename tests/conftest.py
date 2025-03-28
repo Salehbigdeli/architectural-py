@@ -11,12 +11,14 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session, clear_mappers, sessionmaker
 
 from allocations import config
-from allocations.orm import metadata, start_mappers
+from allocations.adapters.orm import metadata, start_mappers
 
 
 @pytest.fixture
 def restart_api() -> None:
-    Path(__file__).parent.parent.joinpath("src", "allocations", "app.py").touch()
+    Path(__file__).parent.parent.joinpath(
+        "src", "allocations", "endpoints", "api.py"
+    ).touch()
     time.sleep(0.5)
     wait_for_webapp_to_come_up()
 
