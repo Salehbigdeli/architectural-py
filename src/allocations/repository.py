@@ -5,6 +5,12 @@ from sqlalchemy.orm import Session
 from allocations import model
 
 
+class AbstractSession(abc.ABC):
+    @abc.abstractmethod
+    def commit(self) -> None:
+        raise NotImplementedError
+
+
 class AbstractRepository(abc.ABC):
     @abc.abstractmethod
     def add(self, batch: model.Batch) -> None:
@@ -12,6 +18,10 @@ class AbstractRepository(abc.ABC):
 
     @abc.abstractmethod
     def get(self, reference: str) -> model.Batch:
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def list(self) -> list[model.Batch]:
         raise NotImplementedError
 
 

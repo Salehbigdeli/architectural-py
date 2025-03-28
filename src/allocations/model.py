@@ -66,7 +66,7 @@ class OutOfStock(Exception):
     pass
 
 
-def allocate(line: OrderLine, batches: list[Batch]) -> str:
+def allocate(line: OrderLine, batches: list[Batch]) -> str:  # example of service object
     for batch in sorted(batches):
         if batch.can_allocate(line):
             batch.allocate(line)
