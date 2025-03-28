@@ -17,7 +17,7 @@ from allocations.adapters.orm import metadata, start_mappers
 @pytest.fixture
 def restart_api() -> None:
     Path(__file__).parent.parent.joinpath(
-        "src", "allocations", "endpoints", "api.py"
+        "src", "allocations", "endpoints", "app.py"
     ).touch()
     time.sleep(0.5)
     wait_for_webapp_to_come_up()
