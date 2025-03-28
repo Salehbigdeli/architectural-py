@@ -71,4 +71,4 @@ def allocate(line: OrderLine, batches: list[Batch]) -> str:  # example of servic
         if batch.can_allocate(line):
             batch.allocate(line)
             return batch.reference
-    raise OutOfStock(f"Out of stock for {line.sku}")
+    raise OutOfStock(f"Out of stock for sku {line.sku}")

@@ -1,12 +1,12 @@
 import abc
+from typing import Protocol
 
 from sqlalchemy.orm import Session
 
 from allocations import model
 
 
-class AbstractSession(abc.ABC):
-    @abc.abstractmethod
+class AbstractSession(Protocol):
     def commit(self) -> None:
         raise NotImplementedError
 

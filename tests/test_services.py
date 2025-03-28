@@ -17,7 +17,7 @@ class FakeRepository(repository.AbstractRepository):
         return list(self._batches)
 
 
-class FakeSession(repository.AbstractSession):
+class FakeSession:
     committed = False
 
     def commit(self) -> None:

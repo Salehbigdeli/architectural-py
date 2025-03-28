@@ -6,7 +6,7 @@ from pydantic import BaseModel, PositiveInt
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from allocations import config, model, orm, repository
+from allocations import config, model, orm, repository, services
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -27,30 +27,24 @@ def is_valid_sku(sku: str, batches: list[model.Batch]) -> bool:
     return sku in {b.sku for b in batches}
 
 
-@app.post("/allocate", status_code=201)
+@app.post("/allocate", status_code=201, response_model=dict[str, str])  # this should not be None
 async def allocate_endpoint(
     request: Request, allocation: AllocationRequest
 ) -> dict[str, str] | JSONResponse:
     session = get_session()
-    batches = repository.SqlAlchemyRepository(
+    repo = repository.SqlAlchemyRepository(
         session
-    ).list()  # the name is not good here, it's not visible that it's a list of batches!
-
-    if not is_valid_sku(allocation.sku, batches):
-        return JSONResponse(
-            status_code=400, content={"message": f"Invalid sku {allocation.sku}"}
-        )
+    )
 
     line = model.OrderLine(allocation.orderid, allocation.sku, allocation.qty)
     try:
-        batchref = model.allocate(line, batches)
-    except model.OutOfStock:
+        batchref = services.allocate(line, repo, session)
+    except (model.OutOfStock, services.InvalidSku) as e:
         return JSONResponse(
             status_code=400,
-            content={"message": f"Out of stock for sku {allocation.sku}"},
+            content={"message": str(e)},
         )
 
-    session.commit()
     return {"batchref": batchref}
 
 

@@ -61,7 +61,7 @@ def test_allocations_are_persisted(
 @pytest.mark.usefixtures("restart_api")
 def test_400_message_for_out_of_stock(
     add_stock: Callable[[list[tuple[str, str, int, str | None]]], None],
-) -> None:  # (1)
+) -> None:
     sku, small_batch, large_order = random_sku(), random_batchref(), random_orderid()
     add_stock(
         [
@@ -76,7 +76,7 @@ def test_400_message_for_out_of_stock(
 
 
 @pytest.mark.usefixtures("restart_api")
-def test_400_message_for_invalid_sku() -> None:  # (2)
+def test_400_message_for_invalid_sku() -> None:
     unknown_sku, orderid = random_sku(), random_orderid()
     data = {"orderid": orderid, "sku": unknown_sku, "qty": 20}
     url = config.get_api_url()
