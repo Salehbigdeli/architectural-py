@@ -74,44 +74,8 @@ def postgres_session(postgres_db: Engine) -> Generator[Session, None, None]:
 
 
 @pytest.fixture
-def add_stock(
-    postgres_session: Session,
-) -> Generator[Callable[[list[tuple[str, str, int, str | None]]], None], None, None]:
-    batches_added = set()
-    skus_added = set()
-
-    def _add_stock(lines: list[tuple[str, str, int, str | None]]) -> None:
-        for ref, sku, qty, eta in lines:
-            postgres_session.execute(
-                text(
-                    "INSERT INTO batches (reference, sku, _purchased_quantity, eta)"
-                    " VALUES (:ref, :sku, :qty, :eta)"
-                ),
-                {"ref": ref, "sku": sku, "qty": qty, "eta": eta},
-            )
-
-            [[batch_id]] = postgres_session.execute(
-                text("SELECT id FROM batches WHERE reference=:ref AND sku=:sku"),
-                {"ref": ref, "sku": sku},
-            )
-            batches_added.add(batch_id)
-            skus_added.add(sku)
-        postgres_session.commit()
-
-    yield _add_stock
-
-    for batch_id in batches_added:
-        postgres_session.execute(
-            text("DELETE FROM allocations WHERE batch_id=:batch_id"),
-            {"batch_id": batch_id},
-        )
-        postgres_session.execute(
-            text("DELETE FROM batches WHERE id=:batch_id"),
-            {"batch_id": batch_id},
-        )
-    for sku in skus_added:
-        postgres_session.execute(
-            text("DELETE FROM order_lines WHERE sku=:sku"),
-            {"sku": sku},
-        )
-        postgres_session.commit()
+def postgres_db() -> None:
+    engine = create_engine(config.get_postgres_uri())
+    wait_for_postgres_to_come_up(engine)
+    metadata.create_all(engine)
+    return engine

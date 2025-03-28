@@ -1,3 +1,4 @@
+from datetime import date
 import logging
 
 from fastapi import FastAPI, Request
@@ -26,22 +27,26 @@ class AllocationRequest(BaseModel):
     qty: PositiveInt
 
 
-def is_valid_sku(sku: str, batches: list[model.Batch]) -> bool:
-    return sku in {b.sku for b in batches}
+class BatchRequest(BaseModel):
+    ref: str
+    sku: str
+    qty: PositiveInt
+    eta: date | None
 
 
 @app.post(
     "/allocate", status_code=201, response_model=dict[str, str]
-)  # this should not be None
+)
 async def allocate_endpoint(
     request: Request, allocation: AllocationRequest
 ) -> dict[str, str] | JSONResponse:
     session = get_session()
     repo = repository.SqlAlchemyRepository(session)
 
-    line = model.OrderLine(allocation.orderid, allocation.sku, allocation.qty)
     try:
-        batchref = services.allocate(line, repo, session)
+        batchref = services.allocate(
+            allocation.orderid, allocation.sku, allocation.qty, repo=repo, session=session
+        )
     except (model.OutOfStock, services.InvalidSku) as e:
         return JSONResponse(
             status_code=400,
@@ -49,6 +54,18 @@ async def allocate_endpoint(
         )
 
     return {"batchref": batchref}
+
+
+@app.post("/add_batch", status_code=201)
+async def add_batch_endpoint(
+    request: Request, batch: BatchRequest
+) -> dict[str, str]:
+    session = get_session()
+    repo = repository.SqlAlchemyRepository(session)
+    services.add_batch(
+        batch.ref, batch.sku, batch.qty, batch.eta, repo=repo, session=session
+    )
+    return {"message": "Ok"}
 
 
 @app.get("/")
